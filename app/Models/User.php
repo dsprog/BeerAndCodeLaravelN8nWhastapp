@@ -4,6 +4,9 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -20,9 +23,18 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'role_id',
+        'level_id',
         'name',
+        'phone',
         'email',
         'password',
+        'daily_target_minutes',
+        'preferred_start_time',
+        'preferred_days',
+        'onboarding_completed_at',
+        'last_message_at',
+        'state',
     ];
 
     /**
@@ -47,6 +59,10 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'preferred_days' => 'array',
+            'state' => 'array',
+            'onboarding_completed_at' => 'datetime',
+            'last_message_at' => 'datetime',
         ];
     }
 
@@ -58,7 +74,42 @@ class User extends Authenticatable
         return Str::of($this->name)
             ->explode(' ')
             ->take(2)
-            ->map(fn ($word) => Str::substr($word, 0, 1))
+            ->map(fn($word) => Str::substr($word, 0, 1))
             ->implode('');
+    }
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function level(): BelongsTo
+    {
+        return $this->belongsTo(Level::class);
+    }
+
+    public function englishJourneyLogs(): HasMany
+    {
+        return $this->hasMany(EnglishJourneyLog::class);
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class);
+    }
+
+    public function tests(): HasMany
+    {
+        return $this->hasMany(Test::class);
+    }
+
+    public function lastLessonTest(): HasOne
+    {
+        return $this->hasOne(Test::class)->latestOfMany();
+    }
+
+    public function lastJourneyLog(): HasOne
+    {
+        return $this->hasOne(EnglishJourneyLog::class)->latestOfMany();
     }
 }
